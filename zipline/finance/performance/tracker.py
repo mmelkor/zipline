@@ -324,7 +324,7 @@ class PerformanceTracker(object):
 
         self.all_benchmark_returns[midnight] = event.returns
 
-    def check_upcoming_dividends(self, midnight_of_date_that_just_ended):
+    def check_upcoming_dividends(self, midnight_of_date_that_just_ended, history_container):
         """
         Check if we currently own any stocks with dividends whose ex_date is
         the next trading day.  Track how much we should be payed on those
@@ -365,6 +365,7 @@ class PerformanceTracker(object):
         position_tracker = self.position_tracker
         if len(dividends_earnable):
             position_tracker.earn_dividends(dividends_earnable)
+            history_container.adjust_history(dividends_earnable)
 
         if not len(dividends_payable):
             return
@@ -375,7 +376,7 @@ class PerformanceTracker(object):
             # notify periods to update their stats
             period.handle_dividends_paid(net_cash_payment)
 
-    def handle_minute_close(self, dt):
+    def handle_minute_close(self, dt, history_container):
         self.update_performance()
         todays_date = normalize_date(dt)
         account = self.get_account(False)
@@ -394,7 +395,7 @@ class PerformanceTracker(object):
         # if this is the close, save the returns objects for cumulative risk
         # calculations and update dividends for the next day.
         if dt == self.market_close:
-            self.check_upcoming_dividends(todays_date)
+            self.check_upcoming_dividends(todays_date, history_container)
 
     def handle_intraday_market_close(self, new_mkt_open, new_mkt_close):
         """
@@ -406,7 +407,7 @@ class PerformanceTracker(object):
         self.market_open = new_mkt_open
         self.market_close = new_mkt_close
 
-    def handle_market_close_daily(self):
+    def handle_market_close_daily(self, history_container):
         """
         Function called after handle_data when running with daily emission
         rate.
@@ -445,7 +446,7 @@ class PerformanceTracker(object):
         self.todays_performance.period_open = self.market_open
         self.todays_performance.period_close = self.market_close
 
-        self.check_upcoming_dividends(completed_date)
+        self.check_upcoming_dividends(completed_date, history_container)
 
         return daily_update
 
