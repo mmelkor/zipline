@@ -69,16 +69,21 @@ cdef class Asset:
         return self.sid_hash
 
     def __richcmp__(x, y, int op):
+        return Asset._richcmp(x, y, op)
+
+    # Workaround to let subclasses call Asset's richcmp
+    @classmethod
+    def _richcmp(cls, x, y, int op):
         """
         Cython rich comparison method.  This is used in place of various
         equality checkers in pure python.
 
-        <	0
-        <=	1
-        ==	2
-        !=	3
-        >	4
-        >=	5
+        <   0
+        <=  1
+        ==  2
+        !=  3
+        >   4
+        >=  5
         """
         cdef int x_as_int, y_as_int
 
@@ -251,6 +256,10 @@ cdef class Future(Asset):
         if self.end_date is None:
             self.end_date = expiration_date
 
+    # Workaround to let Future inherit Asset's __hash__
+    def __hash__(self):
+        return super().__hash__()
+
     def __str__(self):
         if self.symbol:
             return 'Future(%d [%s])' % (self.sid, self.symbol)
@@ -266,6 +275,37 @@ cdef class Future(Asset):
         strings = ('%s=%s' % (t[0], t[1]) for t in tuples)
         params = ', '.join(strings)
         return 'Future(%d, %s)' % (self.sid, params)
+
+    def __richcmp__(x, y, int op):
+        """
+        Cython rich comparison method.  This is used in place of various
+        equality checkers in pure python.
+
+        <   0
+        <=  1
+        ==  2
+        !=  3
+        >   4
+        >=  5
+        """
+        if isinstance(x, Future) and isinstance(y, Future):
+            # If both are Futures with the same root symbol, order by
+            # expiration date
+            if x.root_symbol == y.root_symbol:
+                if op == 0:
+                    # <
+                    return x.expiration_date < y.expiration_date
+                elif op == 1:
+                    # <=
+                    return x.expiration_date <= y.expiration_date
+                elif op == 4:
+                    # >
+                    return x.expiration_date > y.expiration_date
+                elif op == 5:
+                    # >=
+                    return x.expiration_date >= y.expiration_date
+
+        return super()._richcmp(x, y, op)
 
     cpdef __reduce__(self):
         """

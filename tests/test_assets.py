@@ -299,6 +299,31 @@ class TestFuture(TestCase):
         expiration_date=pd.Timestamp('2014-02-20', tz='UTC'),
         contract_multiplier=500
     )
+    future_2 = Future(
+        0,
+        symbol='OMJ15',
+        root_symbol='OM',
+        notice_date=pd.Timestamp('2014-02-20', tz='UTC'),
+        expiration_date=pd.Timestamp('2014-3-20', tz='UTC'),
+        contract_multiplier=500
+    )
+    future_3 = Future(
+        1357,
+        symbol='CLK15',
+        root_symbol='CL',
+        notice_date=pd.Timestamp('2014-01-20', tz='UTC'),
+        expiration_date=pd.Timestamp('2014-02-20', tz='UTC'),
+        contract_multiplier=500
+    )
+    asset = Asset(
+        1337,
+        symbol="DOGE",
+        asset_name="DOGECOIN",
+        start_date=pd.Timestamp('2013-12-08 9:31AM', tz='UTC'),
+        end_date=pd.Timestamp('2014-06-25 11:21AM', tz='UTC'),
+        first_traded=pd.Timestamp('2013-12-08 9:31AM', tz='UTC'),
+        exchange='THE MOON',
+    )
 
     def test_str(self):
         strd = self.future.__str__()
@@ -314,6 +339,28 @@ class TestFuture(TestCase):
         self.assertTrue("expiration_date=Timestamp('2014-02-20 00:00:00+0000'"
                         in reprd)
         self.assertTrue("contract_multiplier=500" in reprd)
+
+    def test_equality(self):
+        self.assertEqual(self.future, self.future)
+
+        self.assertEqual(self.future, 2468)
+        self.assertNotEqual(self.future, 2467)
+
+        self.assertNotEqual(self.future, self.future_2)
+        self.assertNotEqual(self.future, self.future_3)
+        self.assertNotEqual(self.future, self.asset)
+
+    def test_less(self):
+        self.assertLess(self.future, self.future_2)
+        self.assertLess(self.future_3, self.future)
+        self.assertLess(self.asset, self.future)
+        self.assertLess(1337, self.future)
+
+    def test_greater(self):
+        self.assertGreater(self.future_2, self.future)
+        self.assertGreater(self.future, self.future_3)
+        self.assertGreater(self.future, self.asset)
+        self.assertGreater(self.future, 1337)
 
     def test_reduce(self):
         reduced = self.future.__reduce__()
