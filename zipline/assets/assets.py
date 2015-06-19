@@ -45,6 +45,7 @@ ASSET_FIELDS = [
     'sid',
     'asset_type',
     'symbol',
+    'root_symbol',
     'asset_name',
     'start_date',
     'end_date',
